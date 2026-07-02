@@ -1,6 +1,6 @@
 # Grimmorium Backend API
 
-API Flask para personagens, grimorio, economia e sincronizacao com JSON local.
+API Flask para personagens, grimório e economia, com backend como fonte padrão dos dados.
 
 ## Requisitos
 
@@ -50,12 +50,12 @@ Invoke-WebRequest -UseBasicParsing http://127.0.0.1:5000/api/hello | Select-Obje
 - POST /api/sync/import-local-json
 - POST /api/sync/export-local-json
 
-## Banco e sincronizacao
+## Banco e sincronização
 
 - SQLite em `instance/grimmorium.db`
-- Seed inicial: importa `grimmorium-react-main/public/personagens.json` e `grimmorium-react-main/public/magias.json` quando o banco estiver vazio
-- Backend e a fonte principal dos dados
-- Apos mutacoes via API (POST/PUT/PATCH/DELETE), os JSON locais sao atualizados automaticamente
+- Backend é a fonte principal dos dados (source of truth)
+- Seed inicial opcional: importa `grimmorium-react-main/public/personagens.json` e `grimmorium-react-main/public/magias.json` quando o banco estiver vazio
+- Após mutações via API (POST/PUT/PATCH/DELETE), os JSON locais podem ser atualizados automaticamente para manter compatibilidade
 
 ## Creditos e APIs externas
 
