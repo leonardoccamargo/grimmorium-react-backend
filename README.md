@@ -1,108 +1,67 @@
-# Grimmorium Backend API (v2)
+# Grimmorium Backend API
 
-API REST em Python + Flask para o projeto Grimmorium com suporte a:
+API Flask para personagens, grimorio, economia e sincronizacao com JSON local.
 
-- fluxo wizard de criação de personagem,
-- hub do jogador (play mode),
-- sistema de economia, inventário e ledger,
-- compatibilidade com endpoints legados do 1o MVP.
-
-## Estrutura
-
-```text
-grimmorium-react-backend/
-├── app/
-│   ├── __init__.py
-│   ├── api_routes.py
-│   ├── models.py
-│   ├── schemas.py
-│   ├── api.py
-│   └── routes.py
-├── instance/
-├── main.py
-└── requirements.txt
-```
-
-## Execução
-
-Pré-requisitos:
+## Requisitos
 
 - Python 3.10+
 - pip
+- venv recomendado na raiz do projeto: `.venv`
 
-Instalar dependências:
+## Instalação
+
+No terminal (a partir da raiz do projeto):
 
 ```bash
+cd grimmorium-react-backend
 pip install -r requirements.txt
 ```
 
-Executar:
+## Execução (Windows/PowerShell)
 
-```bash
-py -3 main.py
+Comandos:
+
+```powershell
+& ".\.venv\Scripts\python.exe" .\grimmorium-react-backend\main.py
 ```
 
-Servidor local:
+Esse procedimento evita dependencias do Python global e reduz falhas de ambiente.
 
-- http://127.0.0.1:5000
+Servidor: http://127.0.0.1:5000
 
-Swagger/OpenAPI:
+Teste rapido de funcionamento:
+
+```powershell
+Invoke-WebRequest -UseBasicParsing http://127.0.0.1:5000/api/hello | Select-Object -ExpandProperty Content
+```
+
+## Swagger / OpenAPI
 
 - UI: http://127.0.0.1:5000/openapi/swagger
 - JSON: http://127.0.0.1:5000/openapi/openapi.json
 
-## Banco de dados
+## Endpoints essenciais
 
-- SQLite: `instance/grimmorium.db`
-- Legacy mantido: tabela `personagens`
-- V2 principal:
-  - `characters`
-  - `character_abilities`
-  - `character_spell_slots`
-  - `inventory_items`
-  - `shop_items`
-  - `ledger_entries`
+- GET /
+- GET /api/hello
+- GET /api/v2/characters
+- POST /api/v2/characters/wizard
+- GET /api/magias
+- POST /api/sync/import-local-json
+- POST /api/sync/export-local-json
 
-## Endpoints principais
+## Banco e sincronizacao
 
-Health:
+- SQLite em `instance/grimmorium.db`
+- Seed inicial: importa `grimmorium-react-main/public/personagens.json` e `grimmorium-react-main/public/magias.json` quando o banco estiver vazio
+- Backend e a fonte principal dos dados
+- Apos mutacoes via API (POST/PUT/PATCH/DELETE), os JSON locais sao atualizados automaticamente
 
-- `GET /api/hello`
+## Apoio ao MVP
 
-Legacy (compatibilidade):
+Este backend sustenta o fluxo do MVP com:
 
-- `GET /api/personagens`
-- `POST /api/personagens`
-
-Characters v2:
-
-- `GET /api/v2/characters`
-- `GET /api/v2/characters/{id}`
-- `POST /api/v2/characters/wizard`
-- `PUT /api/v2/characters/{id}/play`
-- `PUT /api/v2/characters/{id}/spell-slots/{slot_level}`
-- `POST /api/v2/characters/{id}/rest/short`
-- `POST /api/v2/characters/{id}/rest/long`
-- `PUT /api/v2/characters/{id}/inventory/{item_id}/equip`
-- `PUT /api/v2/characters/{id}/inventory/{item_id}/attune`
-
-Shop e economia v2:
-
-- `GET /api/v2/shop/items`
-- `POST /api/v2/shop/items`
-- `POST /api/v2/characters/{id}/shop/purchase`
-- `POST /api/v2/characters/{id}/ledger/reward`
-- `GET /api/v2/characters/{id}/ledger`
-
-## Observações de arquitetura
-
-- Optimistic UI e autosave com debounce devem ser feitos no frontend.
-- O backend já está preparado para operações de economia em transação única.
-- O campo de attunement limita itens sintonizados por personagem.
-- AC é recalculada com base no equipamento marcado como em uso.
-
-## Próximos passos
-
-- Integrar o frontend React aos endpoints `/api/v2/...`.
-- Adicionar autenticação quando houver multiusuário.
-- Evoluir seed de `shop_items` para catálogo inicial do mestre.
+- criacao guiada de personagem (wizard)
+- play mode com atualizacao de ficha
+- consulta de magias
+- validacao de pontas via Swagger

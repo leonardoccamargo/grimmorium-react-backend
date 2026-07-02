@@ -1,7 +1,9 @@
 # Importações necessárias para configurar a aplicação Flask
 from flask_openapi3 import OpenAPI, Info
 from flask_cors import CORS
+from flask import request
 from app.models import db
+from app.data_sync import seed_backend_from_frontend_json, export_backend_to_frontend_json
 import os
 
 def create_app():
@@ -56,6 +58,8 @@ def create_app():
     # Cria todas as tabelas do banco de dados dentro do contexto da aplicação
     with app.app_context():
         db.create_all()  # Cria tabelas baseadas nos modelos definidos
+        seed_backend_from_frontend_json()
+        export_backend_to_frontend_json()
 
     # Customiza o HTML do Swagger UI para ordenar rotas: GET → POST → PUT → DELETE
     from flask_openapi3_swagger.templates import swagger_html_string
@@ -71,6 +75,22 @@ def create_app():
     # Importa e registra todas as rotas da API
     from app.api_routes import init_api_routes
     init_api_routes(app)
+
+    @app.after_request
+    def sync_json_after_mutation(response):
+        should_sync = (
+            request.path.startswith('/api/')
+            and request.method in {'POST', 'PUT', 'PATCH', 'DELETE'}
+            and response.status_code < 400
+        )
+
+        if should_sync:
+            try:
+                export_backend_to_frontend_json()
+            except Exception as exc:
+                app.logger.warning('Failed to sync local JSON after mutation: %s', exc)
+
+        return response
 
     # Gera o OpenAPI JSON com os caminhos registrados via decorators
     app.generate_spec_json()

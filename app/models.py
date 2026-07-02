@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 
@@ -285,6 +286,54 @@ class ShopItem(db.Model):
             'price_gp': self.price_gp,
             'weight': self.weight,
             'description': self.description,
+        }
+
+
+class Spell(db.Model):
+    __tablename__ = 'spells'
+
+    id = db.Column(db.Integer, primary_key=True)
+    spell_index = db.Column(db.String(180), nullable=False, unique=True)
+    nome = db.Column(db.String(180), nullable=False)
+    nivel = db.Column(db.Integer, nullable=False, default=0)
+    escola = db.Column(db.String(120), nullable=True)
+    classes_json = db.Column(db.Text, nullable=False, default='[]')
+    tempo = db.Column(db.String(120), nullable=True)
+    alcance = db.Column(db.String(120), nullable=True)
+    componentes = db.Column(db.String(220), nullable=True)
+    comp_v = db.Column(db.Boolean, nullable=False, default=False)
+    comp_s = db.Column(db.Boolean, nullable=False, default=False)
+    comp_m = db.Column(db.Boolean, nullable=False, default=False)
+    material = db.Column(db.String(240), nullable=True)
+    duracao = db.Column(db.String(160), nullable=True)
+    ritual = db.Column(db.Boolean, nullable=False, default=False)
+    concentracao = db.Column(db.Boolean, nullable=False, default=False)
+    descricao = db.Column(db.Text, nullable=True)
+
+    def to_dict(self):
+        try:
+            classes = json.loads(self.classes_json or '[]')
+            if not isinstance(classes, list):
+                classes = []
+        except json.JSONDecodeError:
+            classes = []
+
+        return {
+            'nome': self.nome,
+            'nivel': self.nivel,
+            'escola': self.escola,
+            'classes': classes,
+            'tempo': self.tempo,
+            'alcance': self.alcance,
+            'componentes': self.componentes,
+            'comp_v': self.comp_v,
+            'comp_s': self.comp_s,
+            'comp_m': self.comp_m,
+            'material': self.material,
+            'duracao': self.duracao,
+            'ritual': self.ritual,
+            'concentracao': self.concentracao,
+            'descricao': self.descricao,
         }
 
 

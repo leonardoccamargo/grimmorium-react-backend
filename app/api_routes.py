@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from math import ceil
 from typing import Optional
-from flask import jsonify
+from flask import jsonify, request
 from flask_openapi3 import Tag
 from pydantic import BaseModel, Field
 
@@ -14,9 +14,11 @@ from app.models import (
     InventoryItem,
     ShopItem,
     LedgerEntry,
+    Spell,
     ability_modifier,
     normalize_name,
 )
+from app.data_sync import export_backend_to_frontend_json, seed_backend_from_frontend_json
 from app.schemas import (
     PersonagemSchema,
     PathCharacterId,
@@ -37,6 +39,7 @@ tag_health = Tag(name='Health', description='Health check')
 tag_personagens = Tag(name='Personagens', description='Legacy character management')
 tag_characters_v2 = Tag(name='CharactersV2', description='Grimmorium v2 character hub')
 tag_shop_v2 = Tag(name='ShopV2', description='Shop and economy endpoints')
+tag_spells = Tag(name='Spells', description='Spellbook endpoints and JSON sync')
 
 
 class QueryCharactersLegacy(BaseModel):
@@ -89,9 +92,52 @@ def register_ledger(character_id: int, entry_type: str, amount_cp: int, descript
 
 
 def init_api_routes(app):
+    @app.get('/', summary='Root health endpoint', tags=[tag_health])
+    def root_health():
+        return jsonify({'status': 'success', 'message': 'Grimmorium backend is running'}), 200
+
     @app.get('/api/hello', summary='Test Endpoint', tags=[tag_health])
     def hello():
         return jsonify({'status': 'success', 'message': 'Hello from Flask API!'}), 200
+
+    @app.get('/api/magias', summary='List spells from backend', tags=[tag_spells])
+    def list_spells():
+        try:
+            search = request.args.get('search', '').strip()
+            level_raw = request.args.get('nivel', '').strip()
+
+            query = Spell.query
+            if search:
+                query = query.filter(Spell.nome.ilike(f'%{search}%'))
+
+            if level_raw != '':
+                level_value = int(level_raw)
+                query = query.filter(Spell.nivel == level_value)
+
+            rows = query.order_by(Spell.nivel.asc(), Spell.nome.asc()).all()
+            return jsonify({'status': 'success', 'total': len(rows), 'magias': [row.to_dict() for row in rows]}), 200
+        except ValueError:
+            return jsonify({'status': 'error', 'message': 'Query parameter nivel must be an integer'}), 400
+        except Exception as exc:
+            return jsonify({'status': 'error', 'message': str(exc)}), 500
+
+    @app.post('/api/sync/import-local-json', summary='Seed backend from local JSON files', tags=[tag_spells])
+    def sync_import_local_json():
+        try:
+            result = seed_backend_from_frontend_json()
+            export_info = export_backend_to_frontend_json()
+            return jsonify({'status': 'success', 'imported': result, 'exported': export_info}), 200
+        except Exception as exc:
+            db.session.rollback()
+            return jsonify({'status': 'error', 'message': str(exc)}), 500
+
+    @app.post('/api/sync/export-local-json', summary='Export backend state to local JSON files', tags=[tag_spells])
+    def sync_export_local_json():
+        try:
+            result = export_backend_to_frontend_json()
+            return jsonify({'status': 'success', 'exported': result}), 200
+        except Exception as exc:
+            return jsonify({'status': 'error', 'message': str(exc)}), 500
 
     # ==================== LEGADO MVP 1 ====================
     @app.get('/api/personagens', summary='List Characters (legacy)', tags=[tag_personagens])
