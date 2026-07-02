@@ -59,7 +59,7 @@ Invoke-WebRequest -UseBasicParsing http://127.0.0.1:5000/api/hello | Select-Obje
 
 ## Creditos e APIs externas
 
-- [D&D 5e API](https://www.dnd5eapi.co) — API pública REST com dados do D&D 5ª edição (origem dos dados de magias utilizados no sistema)
+- [D&D 5e API](https://www.dnd5eapi.co) — API pública REST com dados do D&D 5ª edição.
 
 ## Apoio ao MVP
 
