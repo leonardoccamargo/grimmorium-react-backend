@@ -57,6 +57,10 @@ Invoke-WebRequest -UseBasicParsing http://127.0.0.1:5000/api/hello | Select-Obje
 - Backend e a fonte principal dos dados
 - Apos mutacoes via API (POST/PUT/PATCH/DELETE), os JSON locais sao atualizados automaticamente
 
+## Creditos e APIs externas
+
+- [D&D 5e API](https://www.dnd5eapi.co) — API pública REST com dados do D&D 5ª edição (origem dos dados de magias utilizados no sistema)
+
 ## Apoio ao MVP
 
 Este backend sustenta o fluxo do MVP com:
