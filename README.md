@@ -1,8 +1,6 @@
 # 🔮 Grimmorium Backend API
 
-Uma API Flask para gerenciamento de personagens.
-
-Este repositório contém o **backend** responsável pela lógica de negócios, persistência e gerenciamento do sistema Grimmorium. Ele funciona de forma integrada ao repositório frontend, garantindo que os dados estejam sempre atualizados.
+Este repositório contém o **backend** responsável pela lógica de negócios, persistência e gerenciamento do sistema Grimmorium. Ele funciona de forma integrada ao [repositório frontend](https://github.com/leonardoccamargo/grimmorium-react), garantindo que os dados estejam sempre atualizados.
 
 ---
 
