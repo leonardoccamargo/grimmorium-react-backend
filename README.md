@@ -1,98 +1,111 @@
-# 🔮 Grimmorium Backend API
+# Grimmorium Backend API
 
-API Flask desenvolvida para o gerenciamento de personagens, grimórios e mecânicas de economia. O backend atua como a fonte padrão de dados para a aplicação.
+API Flask/OpenAPI para gerenciamento de personagens, grimorio de magias e economia do MVP.
 
----
+## Pre-requisitos
 
-## 📋 Pré-requisitos
+- Python 3.10+
+- pip
 
-Antes de começar, certifique-se de ter instalado em sua máquina:
-* Python 3.10 ou superior
-* Pip (Gerenciador de pacotes do Python)
+## Passo a Passo (Setup + Execucao)
 
----
+Execute os comandos abaixo a partir da raiz do projeto:
 
-## 🛠️ Instalação e Configuração
+1. Criar ambiente virtual na raiz do workspace (recomendado)
 
-Siga os passos abaixo no terminal a partir da raiz do projeto para configurar o ambiente isolado (.venv):
-
-### 1. Criar o ambiente virtual na raiz do projeto (Recomendado)
-```bash
+```powershell
 python -m venv .venv
 ```
 
-### 2. Acessar o diretório do backend
-```bash
-cd grimmorium-react-backend
+2. Ativar o ambiente virtual (Windows PowerShell)
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+.\.venv\Scripts\Activate.ps1
 ```
 
-### 3. Instalar as dependências
-```bash
-pip install -r requirements.txt
+3. Entrar na pasta do backend
+
+```powershell
+cd .\grimmorium-react-backend
 ```
 
----
+4. Instalar dependencias
 
-## 🚀 Execução (Windows / PowerShell)
+```powershell
+pip install -r .\requirements.txt
+```
 
-Certifique-se de que o ambiente virtual esteja ativo (o terminal exibirá `(.venv)` no início da linha). 
-
-Como você já está dentro da pasta `grimmorium-react-backend`, execute o servidor diretamente com o comando do Python:
+5. Iniciar a API
 
 ```powershell
 python .\main.py
 ```
 
-* **Servidor local:** http://127.0.0.1:5000
+6. Validar se subiu corretamente
 
----
+- API: http://127.0.0.1:5000/
+- Health check: http://127.0.0.1:5000/api/hello
 
-## 📖 Documentação da API (Swagger / OpenAPI)
+## Variaveis de Ambiente
 
-Com o servidor rodando, você pode acessar a interface de testes ou o esquema nos seguintes links:
-* **Interface Swagger UI:** http://127.0.0
-* **Esquema JSON:** http://127.0.0
+No estado atual do projeto, o backend nao exige arquivo `.env` para rodar localmente.
 
----
+- Banco padrao: SQLite local (`sqlite:///grimmorium.db`)
+- Porta padrao: `5000`
 
-## 📍 Endpoints Essenciais
+Se quiser evoluir para ambientes distintos (dev/homolog/prod), vale adicionar um `.env` proprio do backend depois.
 
-Abaixo estão as principais rotas públicas e internas da aplicação:
+## Documentacao da API (Swagger/OpenAPI)
 
-### Status e Testes
-* `GET /` — Página ou rota raiz.
-* `GET /api/hello` — Teste rápido de conectividade.
+Com o servidor rodando:
 
-### Personagens e Grimórios
-* `GET /api/v2/characters` — Listar personagens existentes.
-* `POST /api/v2/characters/wizard` — Criar um novo mago.
-* `GET /api/magias` — Listar magias cadastradas.
+- Swagger UI: http://127.0.0.1:5000/openapi/swagger
+- OpenAPI JSON: http://127.0.0.1:5000/openapi/openapi.json
 
-### Sincronização de Arquivos
-* `POST /api/sync/import-local-json` — Importar dados dos arquivos JSON locais para o banco.
-* `POST /api/sync/export-local-json` — Exportar dados do banco de volta para os JSON locais.
+## Endpoints Principais
 
----
+### Health
 
-## 💾 Banco de Dados e Sincronização
+- `GET /`
+- `GET /api/hello`
 
-* **Tecnologia:** SQLite armazenado localmente em `instance/grimmorium.db`.
-* **Fonte da Verdade:** O backend é a fonte principal e oficial de todos os dados (*source of truth*).
-* **Seed Inicial Opcional:** Caso o banco SQLite esteja vazio ao iniciar, a API importa automaticamente os arquivos `grimmorium-react-main/public/personagens.json` e `grimmorium-react-main/public/magias.json`.
-* **Sincronização Ativa:** Após qualquer alteração via API (`POST`, `PUT`, `PATCH`, `DELETE`), os arquivos JSON locais podem ser atualizados de forma automática pelo backend para manter a compatibilidade com o frontend.
+### Magias e Sincronizacao
 
----
+- `GET /api/magias`
+- `POST /api/sync/import-local-json`
+- `POST /api/sync/export-local-json`
 
-## 🛡️ Apoio ao MVP
+### Legado (MVP 1)
 
-Este ecossistema de backend sustenta todas as regras de negócio essenciais para o MVP do projeto:
-* Criação guiada de novos personagens da classe Mago (*wizard*).
-* Modo de jogo (*play mode*) com atualização da ficha em tempo real.
-* Consulta e gerenciamento de grimórios de magias.
-* Validação rápida e documentada de ponta a ponta via Swagger.
+- `GET /api/personagens`
+- `POST /api/personagens`
 
----
+### V2 (MVP atual)
 
-## 🌍 Créditos e APIs Externas
+- `GET /api/v2/characters`
+- `GET /api/v2/characters/<id>`
+- `DELETE /api/v2/characters/<id>`
+- `POST /api/v2/characters/wizard`
+- `PUT /api/v2/characters/<id>/play`
+- `PUT /api/v2/characters/<id>/spell-slots/<slot_level>`
+- `POST /api/v2/characters/<id>/rest/short`
+- `POST /api/v2/characters/<id>/rest/long`
+- `PUT /api/v2/characters/<id>/inventory/<item_id>/equip`
+- `PUT /api/v2/characters/<id>/inventory/<item_id>/attune`
+- `POST /api/v2/characters/<id>/shop/purchase`
+- `POST /api/v2/characters/<id>/ledger/reward`
+- `GET /api/v2/characters/<id>/ledger`
 
-* **[D&D 5e API](https://dnd5eapi.co)** — API pública REST utilizada para consumir e integrar dados oficiais do sistema Dungeons & Dragons 5ª Edição.
+## Banco e Source of Truth
+
+- Banco local em SQLite (arquivo `instance/grimmorium.db`)
+- Backend e a fonte principal dos dados
+- Ao iniciar, se o banco estiver vazio, a API faz seed a partir de:
+	- `grimmorium-react-main/public/personagens.json`
+	- `grimmorium-react-main/public/magias.json`
+- Em mutacoes bem-sucedidas (`POST`, `PUT`, `PATCH`, `DELETE`), o backend exporta dados para os JSONs do frontend automaticamente
+
+## Creditos
+
+- D&D 5e API: https://dnd5eapi.co
