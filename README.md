@@ -1,92 +1,116 @@
-# Grimmorium Backend API
+# 🔮 Grimmorium Backend API
 
-API Flask/OpenAPI para gerenciamento de personagens, magias e economia do MVP.
+Uma API Flask para gerenciamento de personagens.
 
-## Pre-requisitos
+Este repositório contém o **backend** responsável pela lógica de negócios, persistência e gerenciamento do sistema Grimmorium. Ele funciona de forma integrada ao repositório frontend, garantindo que os dados estejam sempre atualizados.
 
-1. Windows com PowerShell
-2. Python 3.10+ instalado (https://www.python.org)
+---
 
-## Passo a passo
+## 🛠️ Pré-requisitos
 
-1. Criar ambiente virtual
+1. **Sistema Operacional:** Windows com PowerShell.
+2. **Linguagem:** Python 3.10+ instalado ([Download aqui](https://www.python.org)).
+
+---
+
+## 🚀 Passo a Passo para Execução
+
+Siga a ordem dos comandos abaixo no seu PowerShell:
+
+### 1. Criar ambiente virtual
 
 ```powershell
 python -m venv .venv
+
 ```
 
-2. Ativar ambiente virtual
+### 2. Ativar ambiente virtual
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
+
 ```
 
-3. Entrar na pasta do backend
+### 3. Entrar na pasta do backend
 
 ```powershell
 cd .\grimmorium-react-backend
+
 ```
 
-4. Instalar dependências
+### 4. Instalar dependências
 
 ```powershell
 pip install -r requirements.txt
+
 ```
 
-5. Iniciar backend
+### 5. Iniciar backend
 
 ```powershell
 python main.py
+
 ```
 
-## Como testar se está funcionando
+👋 **Como parar o backend:** No terminal onde a API está rodando, pressione `Ctrl + C`.
 
-Com o servidor ligado, abra no navegador:
+---
 
-1. API raiz: http://127.0.0.1:5000/
-2. Health check: http://127.0.0.1:5000/api/hello
-3. Swagger (tela para testar endpoints): http://127.0.0.1:5000/openapi/swagger
+## 🧪 Como testar se está funcionando
 
-## Como parar o backend
+Com o servidor ligado, você pode abrir os seguintes links no seu navegador para validação:
 
-No terminal onde a API está rodando, pressione `Ctrl + C`.
+* **API Raiz:** [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
+* **Health Check:** [http://127.0.0.1:5000/api/hello](http://127.0.0.1:5000/api/hello)
+* **Swagger (Interface de testes):** [http://127.0.0.1:5000/openapi/swagger](http://127.0.0.1:5000/openapi/swagger)
 
-## Endpoints principais
+---
 
-### Health
+## 📋 Endpoints Principais
 
-- GET /
-- GET /api/hello
+### 🩺 Health
 
-### Magias e sincronização
+* `GET /`
+* `GET /api/hello`
 
-- GET /api/magias
-- POST /api/sync/import-local-json
-- POST /api/sync/export-local-json
+### 🪄 Magias e Sincronização
 
-### Personagens
+* `GET /api/magias`
+* `POST /api/sync/import-local-json`
+* `POST /api/sync/export-local-json`
 
-- GET /api/v2/characters
-- GET /api/v2/characters/<id>
-- DELETE /api/v2/characters/<id>
-- POST /api/v2/characters/wizard
-- PUT /api/v2/characters/<id>/play
-- PUT /api/v2/characters/<id>/spell-slots/<slot_level>
-- POST /api/v2/characters/<id>/rest/short
-- POST /api/v2/characters/<id>/rest/long
-- PUT /api/v2/characters/<id>/inventory/<item_id>/equip
-- PUT /api/v2/characters/<id>/inventory/<item_id>/attune
-- POST /api/v2/characters/<id>/shop/purchase
-- POST /api/v2/characters/<id>/ledger/reward
-- GET /api/v2/characters/<id>/ledger
+### 🧙‍♂️ Personagens
 
-## Banco e sincronização de dados
+* `GET /api/v2/characters`
+* `GET /api/v2/characters/<id>`
+* `DELETE /api/v2/characters/<id>`
+* `POST /api/v2/characters/wizard`
+* `PUT /api/v2/characters/<id>/play`
+* `PUT /api/v2/characters/<id>/spell-slots/<slot_level>`
+* `POST /api/v2/characters/<id>/rest/short`
+* `POST /api/v2/characters/<id>/rest/long`
+* `PUT /api/v2/characters/<id>/inventory/<item_id>/equip`
+* `PUT /api/v2/characters/<id>/inventory/<item_id>/attune`
+* `POST /api/v2/characters/<id>/shop/purchase`
+* `POST /api/v2/characters/<id>/ledger/reward`
+* `GET /api/v2/characters/<id>/ledger`
 
-1. O backend usa SQLite local.
-2. O backend é a fonte principal dos dados.
-3. Ao iniciar, se o banco SQLite estiver vazio, o backend importa dados iniciais de personagens.json e magias.json.
-4. Em operações de escrita bem-sucedidas na API (POST, PUT, PATCH, DELETE), o backend primeiro atualiza o SQLite e depois exporta os dados para os JSONs do frontend, mantendo personagens.json e magias.json sincronizados.
+---
 
-## Créditos
+## 💾 Banco de Dados e Sincronização
 
-- D&D 5e API: https://dnd5eapi.co
+> ✨ **Regra de Ouro do Sistema:** O backend atua como a **fonte principal da verdade** (Single Source of Truth).
+
+1. **Armazenamento Principal:** O backend utiliza o banco de dados **SQLite** local.
+2. **Inicialização:** Ao iniciar o servidor, se o banco SQLite estiver completamente vazio, o sistema automaticamente importa os dados iniciais dos arquivos `personagens.json` e `magias.json`.
+3. **Fluxo de Escrita:** Em qualquer operação de escrita bem-sucedida na API (`POST`, `PUT`, `PATCH`, `DELETE`), o backend realiza duas etapas ordenadas:
+* **Primeiro:** Atualiza as tabelas correspondentes no SQLite.
+* **Segundo:** Exporta e atualiza os JSONs do frontend, mantendo `personagens.json` e `magias.json` sempre sincronizados.
+
+
+
+---
+
+## 🎖️ Créditos
+
+* **Base de dados externa:** [D&D 5e API](https://dnd5eapi.co)
