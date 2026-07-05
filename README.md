@@ -5,13 +5,7 @@ API Flask/OpenAPI para gerenciamento de personagens, magias e economia do MVP.
 ## Pre-requisitos
 
 1. Windows com PowerShell
-2. Python 3.10 ou superior instalado
-
-Para conferir se o Python esta instalado, rode:
-
-```powershell
-python --version
-```
+2. Python 3.10+ instalado (https://www.python.org)
 
 ## Passo a passo
 
@@ -33,7 +27,7 @@ python -m venv .venv
 cd .\grimmorium-react-backend
 ```
 
-4. Instalar dependencias
+4. Instalar dependências
 
 ```powershell
 pip install -r requirements.txt
@@ -45,7 +39,7 @@ pip install -r requirements.txt
 python main.py
 ```
 
-## Como testar se esta funcionando
+## Como testar se está funcionando
 
 Com o servidor ligado, abra no navegador:
 
@@ -55,7 +49,7 @@ Com o servidor ligado, abra no navegador:
 
 ## Como parar o backend
 
-No terminal onde a API esta rodando, pressione `Ctrl + C`.
+No terminal onde a API está rodando, pressione `Ctrl + C`.
 
 ## Endpoints principais
 
@@ -64,7 +58,7 @@ No terminal onde a API esta rodando, pressione `Ctrl + C`.
 - GET /
 - GET /api/hello
 
-### Magias e sincronizacao
+### Magias e sincronização
 
 - GET /api/magias
 - POST /api/sync/import-local-json
@@ -86,13 +80,13 @@ No terminal onde a API esta rodando, pressione `Ctrl + C`.
 - POST /api/v2/characters/<id>/ledger/reward
 - GET /api/v2/characters/<id>/ledger
 
-## Banco e sincronizacao de dados
+## Banco e sincronização de dados
 
 1. O backend usa SQLite local.
 2. O backend é a fonte principal dos dados.
 3. Ao iniciar, se o banco SQLite estiver vazio, o backend importa dados iniciais de personagens.json e magias.json.
 4. Em operações de escrita bem-sucedidas na API (POST, PUT, PATCH, DELETE), o backend primeiro atualiza o SQLite e depois exporta os dados para os JSONs do frontend, mantendo personagens.json e magias.json sincronizados.
 
-## Creditos
+## Créditos
 
 - D&D 5e API: https://dnd5eapi.co
