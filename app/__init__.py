@@ -1,4 +1,5 @@
-# Importações necessárias para configurar a aplicação Flask
+"""Flask application factory for the Grimmorium backend."""
+
 from flask_openapi3 import OpenAPI, Info
 from flask_cors import CORS
 from flask import request
@@ -7,61 +8,56 @@ from app.data_sync import seed_backend_from_frontend_json, export_backend_to_fro
 import os
 
 def create_app():
-    """
-    Factory function para criar a aplicação Flask.
-    Usa o padrão Application Factory para melhor organização e testabilidade.
-    Configura OpenAPI, CORS, banco de dados e registra as rotas.
-    """
+    """Create and configure the Flask application."""
 
-    # Calcula os caminhos corretos para templates e static files
-    # Como estamos em backend/app/__init__.py, precisamos subir dois níveis para chegar na raiz
+    # Resolve the repository root so OpenAPI can locate shared assets.
     backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # backend/
     root_path = os.path.dirname(backend_dir)  # raiz do projeto
 
+    # API metadata shown in Swagger/OpenAPI.
     info = Info(
         title='Grimmorium API',
         version='2.0.0',
         description='API para gerenciamento de fichas D&D 5e (wizard, play mode e economia)'
     )
 
-    # Cria a aplicação usando OpenAPI (que estende Flask com documentação automática)
+    # Build the OpenAPI-enabled Flask app.
     app = OpenAPI(
-        __name__,  # Nome do módulo atual
+        __name__,
         info=info,
-        template_folder=os.path.join(root_path, 'frontend'),  # Pasta de templates (HTML)
-        static_folder=os.path.join(root_path, 'frontend'),    # Pasta de arquivos estáticos (CSS, JS)
-        static_url_path='/'  # URL para acessar arquivos estáticos
+        template_folder=os.path.join(root_path, 'frontend'),
+        static_folder=os.path.join(root_path, 'frontend'),
+        static_url_path='/'
     )
 
-    # ✅ CONFIGURAÇÃO CORS - Permite que o frontend (em outra porta/origem) faça requisições
-    CORS(app,
-         resources={r"/api/*": {  # Aplica apenas para rotas que começam com /api/
-             "origins": ["*"],  # Permite qualquer origem (em produção, especifique o domínio do frontend)
-             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Métodos HTTP permitidos
-             "allow_headers": ["Content-Type"],  # Headers permitidos
-             "supports_credentials": False  # Não usa cookies/autenticação
-         }}
+    # Allow the React frontend to reach the API during development.
+    CORS(
+        app,
+        resources={r"/api/*": {
+            "origins": ["*"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type"],
+            "supports_credentials": False,
+        }}
     )
 
-    # Configura informações adicionais da documentação OpenAPI/Swagger
-    app.api_doc['servers'] = [  # Lista de servidores onde a API roda
+    # Keep the documented server list explicit for local development.
+    app.api_doc['servers'] = [
         {"url": "http://127.0.0.1:5000", "description": "Development server"}
     ]
 
-    # Configuração do banco de dados SQLite dedicado ao Grimmorium v2
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///grimmorium.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # Desabilita tracking (melhor performance)
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-    # Inicializa o SQLAlchemy com a aplicação Flask
     db.init_app(app)
 
-    # Cria todas as tabelas do banco de dados dentro do contexto da aplicação
+    # Bootstrap database tables and seed/export the local JSON snapshots.
     with app.app_context():
-        db.create_all()  # Cria tabelas baseadas nos modelos definidos
+        db.create_all()
         seed_backend_from_frontend_json()
         export_backend_to_frontend_json()
 
-    # Customiza o HTML do Swagger UI para ordenar rotas: GET → POST → PUT → DELETE
+    # Order Swagger actions to keep the docs readable.
     from flask_openapi3_swagger.templates import swagger_html_string
     custom_swagger = swagger_html_string.replace(
         '...swagger_config\n        })',
@@ -72,12 +68,13 @@ def create_app():
     )
     app.config['SWAGGER_HTML_STRING'] = custom_swagger
 
-    # Importa e registra todas as rotas da API
+    # Register API routes.
     from app.api_routes import init_api_routes
     init_api_routes(app)
 
     @app.after_request
     def sync_json_after_mutation(response):
+        # Persist successful data mutations back to the frontend JSON files.
         should_sync = (
             request.path.startswith('/api/')
             and request.method in {'POST', 'PUT', 'PATCH', 'DELETE'}
@@ -92,8 +89,7 @@ def create_app():
 
         return response
 
-    # Gera o OpenAPI JSON com os caminhos registrados via decorators
+    # Generate the OpenAPI specification after route registration.
     app.generate_spec_json()
 
-    # Retorna a aplicação configurada e pronta para uso
     return app
