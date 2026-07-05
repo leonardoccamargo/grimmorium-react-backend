@@ -1,110 +1,129 @@
 # Grimmorium Backend API
 
-API Flask/OpenAPI para gerenciamento de personagens, grimorio de magias e economia do MVP.
+API Flask/OpenAPI para gerenciamento de personagens, magias e economia do MVP.
+
+## Objetivo deste guia
+
+Este README foi escrito para quem nao tem experiencia tecnica.
+Siga os passos na ordem, sem pular.
 
 ## Pre-requisitos
 
-- Python 3.10+
-- pip
+1. Windows com PowerShell
+2. Python 3.10 ou superior instalado
 
-## Passo a Passo (Setup + Execucao)
+Para conferir se o Python esta instalado, rode:
 
-Execute os comandos abaixo a partir da raiz do projeto:
+```powershell
+python --version
+```
 
-1. Criar ambiente virtual na raiz do workspace (recomendado)
+## Passo a passo simples (sem ativar .venv)
+
+Abra o PowerShell na pasta raiz do projeto e rode um comando por vez.
+
+1. Criar o ambiente virtual (somente na primeira vez)
 
 ```powershell
 python -m venv .venv
 ```
 
-2. Ativar o ambiente virtual (Windows PowerShell)
+2. Instalar bibliotecas do backend (somente na primeira vez, ou quando atualizar dependencias)
 
 ```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-.\.venv\Scripts\Activate.ps1
+.\.venv\Scripts\python.exe -m pip install -r .\grimmorium-react-backend\requirements.txt
 ```
 
-3. Entrar na pasta do backend
+3. Iniciar o backend
 
 ```powershell
-cd .\grimmorium-react-backend
+.\.venv\Scripts\python.exe .\grimmorium-react-backend\main.py
 ```
 
-4. Instalar dependencias
+Pronto. O backend estara rodando.
+
+## Como testar se esta funcionando
+
+Com o servidor ligado, abra no navegador:
+
+1. API raiz: http://127.0.0.1:5000/
+2. Health check: http://127.0.0.1:5000/api/hello
+3. Swagger (tela para testar endpoints): http://127.0.0.1:5000/openapi/swagger
+
+## Como parar o backend
+
+No terminal onde a API esta rodando, pressione `Ctrl + C`.
+
+## Se der erro comum
+
+1. "python nao reconhecido"
+
+- Reinstale o Python e marque a opcao Add Python to PATH.
+
+2. "arquivo nao encontrado .\\.venv\\Scripts\\python.exe"
+
+- Voce provavelmente ainda nao criou a venv.
+- Rode novamente:
 
 ```powershell
-pip install -r .\requirements.txt
+python -m venv .venv
 ```
 
-5. Iniciar a API
+3. Porta 5000 ocupada
 
-```powershell
-python .\main.py
-```
+- Feche outro processo que esteja usando a porta ou rode novamente apos reiniciar o terminal.
 
-6. Validar se subiu corretamente
+## Variaveis de ambiente
 
-- API: http://127.0.0.1:5000/
-- Health check: http://127.0.0.1:5000/api/hello
+Atualmente este backend nao precisa de arquivo .env para rodar localmente.
 
-## Variaveis de Ambiente
-
-No estado atual do projeto, o backend nao exige arquivo `.env` para rodar localmente.
-
-- Banco padrao: SQLite local (`sqlite:///grimmorium.db`)
+- Banco padrao: SQLite local em `instance/grimmorium.db`
 - Porta padrao: `5000`
 
-Se quiser evoluir para ambientes distintos (dev/homolog/prod), vale adicionar um `.env` proprio do backend depois.
-
-## Documentacao da API (Swagger/OpenAPI)
-
-Com o servidor rodando:
-
-- Swagger UI: http://127.0.0.1:5000/openapi/swagger
-- OpenAPI JSON: http://127.0.0.1:5000/openapi/openapi.json
-
-## Endpoints Principais
+## Endpoints principais
 
 ### Health
 
-- `GET /`
-- `GET /api/hello`
+- GET /
+- GET /api/hello
 
-### Magias e Sincronizacao
+### Magias e sincronizacao
 
-- `GET /api/magias`
-- `POST /api/sync/import-local-json`
-- `POST /api/sync/export-local-json`
+- GET /api/magias
+- POST /api/sync/import-local-json
+- POST /api/sync/export-local-json
 
-### Legado (MVP 1)
+### Personagens (legado MVP 1)
 
-- `GET /api/personagens`
-- `POST /api/personagens`
+- GET /api/personagens
+- POST /api/personagens
 
-### V2 (MVP atual)
+### Personagens (V2)
 
-- `GET /api/v2/characters`
-- `GET /api/v2/characters/<id>`
-- `DELETE /api/v2/characters/<id>`
-- `POST /api/v2/characters/wizard`
-- `PUT /api/v2/characters/<id>/play`
-- `PUT /api/v2/characters/<id>/spell-slots/<slot_level>`
-- `POST /api/v2/characters/<id>/rest/short`
-- `POST /api/v2/characters/<id>/rest/long`
-- `PUT /api/v2/characters/<id>/inventory/<item_id>/equip`
-- `PUT /api/v2/characters/<id>/inventory/<item_id>/attune`
-- `POST /api/v2/characters/<id>/shop/purchase`
-- `POST /api/v2/characters/<id>/ledger/reward`
-- `GET /api/v2/characters/<id>/ledger`
+- GET /api/v2/characters
+- GET /api/v2/characters/<id>
+- DELETE /api/v2/characters/<id>
+- POST /api/v2/characters/wizard
+- PUT /api/v2/characters/<id>/play
+- PUT /api/v2/characters/<id>/spell-slots/<slot_level>
+- POST /api/v2/characters/<id>/rest/short
+- POST /api/v2/characters/<id>/rest/long
+- PUT /api/v2/characters/<id>/inventory/<item_id>/equip
+- PUT /api/v2/characters/<id>/inventory/<item_id>/attune
+- POST /api/v2/characters/<id>/shop/purchase
+- POST /api/v2/characters/<id>/ledger/reward
+- GET /api/v2/characters/<id>/ledger
 
-## Banco e Source of Truth
+## Banco e sincronizacao de dados
 
-- Banco local em SQLite (arquivo `instance/grimmorium.db`)
-- Backend e a fonte principal dos dados
-- Ao iniciar, se o banco estiver vazio, a API faz seed a partir de:
-	- `grimmorium-react-main/public/personagens.json`
-	- `grimmorium-react-main/public/magias.json`
-- Em mutacoes bem-sucedidas (`POST`, `PUT`, `PATCH`, `DELETE`), o backend exporta dados para os JSONs do frontend automaticamente
+1. O backend usa SQLite local.
+2. O backend e a fonte principal dos dados.
+3. Se o banco estiver vazio ao iniciar, ele importa dados de:
+
+- grimmorium-react-main/public/personagens.json
+- grimmorium-react-main/public/magias.json
+
+4. Em alteracoes bem-sucedidas (POST, PUT, PATCH, DELETE), o backend exporta dados para os JSONs do frontend.
 
 ## Creditos
 
