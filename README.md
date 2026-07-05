@@ -2,11 +2,6 @@
 
 API Flask/OpenAPI para gerenciamento de personagens, magias e economia do MVP.
 
-## Objetivo deste guia
-
-Este README foi escrito para quem nao tem experiencia tecnica.
-Siga os passos na ordem, sem pular.
-
 ## Pre-requisitos
 
 1. Windows com PowerShell
@@ -62,31 +57,6 @@ Com o servidor ligado, abra no navegador:
 
 No terminal onde a API esta rodando, pressione `Ctrl + C`.
 
-## Se der erro comum
-
-1. "python nao reconhecido"
-
-- Reinstale o Python e marque a opcao Add Python to PATH.
-
-2. "execucao de scripts desabilitada"
-
-- Rode este comando e depois tente ativar de novo:
-
-```powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
-```
-
-3. Porta 5000 ocupada
-
-- Feche outro processo que esteja usando a porta ou rode novamente apos reiniciar o terminal.
-
-## Variaveis de ambiente
-
-Atualmente este backend nao precisa de arquivo .env para rodar localmente.
-
-- Banco padrao: SQLite local em `instance/grimmorium.db`
-- Porta padrao: `5000`
-
 ## Endpoints principais
 
 ### Health
@@ -100,12 +70,7 @@ Atualmente este backend nao precisa de arquivo .env para rodar localmente.
 - POST /api/sync/import-local-json
 - POST /api/sync/export-local-json
 
-### Personagens (legado MVP 1)
-
-- GET /api/personagens
-- POST /api/personagens
-
-### Personagens (V2)
+### Personagens
 
 - GET /api/v2/characters
 - GET /api/v2/characters/<id>
@@ -124,13 +89,9 @@ Atualmente este backend nao precisa de arquivo .env para rodar localmente.
 ## Banco e sincronizacao de dados
 
 1. O backend usa SQLite local.
-2. O backend e a fonte principal dos dados.
-3. Se o banco estiver vazio ao iniciar, ele importa dados de:
-
-- grimmorium-react-main/public/personagens.json
-- grimmorium-react-main/public/magias.json
-
-4. Em alteracoes bem-sucedidas (POST, PUT, PATCH, DELETE), o backend exporta dados para os JSONs do frontend.
+2. O backend é a fonte principal dos dados.
+3. Ao iniciar, se o banco SQLite estiver vazio, o backend importa dados iniciais de personagens.json e magias.json.
+4. Em operações de escrita bem-sucedidas na API (POST, PUT, PATCH, DELETE), o backend primeiro atualiza o SQLite e depois exporta os dados para os JSONs do frontend, mantendo personagens.json e magias.json sincronizados.
 
 ## Creditos
 
