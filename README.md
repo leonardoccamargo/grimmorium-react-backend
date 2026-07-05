@@ -18,29 +18,37 @@ Para conferir se o Python esta instalado, rode:
 python --version
 ```
 
-## Passo a passo simples (sem ativar .venv)
+## Passo a passo
 
-Abra o PowerShell na pasta raiz do projeto e rode um comando por vez.
-
-1. Criar o ambiente virtual (somente na primeira vez)
+1. Criar ambiente virtual
 
 ```powershell
 python -m venv .venv
 ```
 
-2. Instalar bibliotecas do backend (somente na primeira vez, ou quando atualizar dependencias)
+2. Ativar ambiente virtual
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r .\grimmorium-react-backend\requirements.txt
+.\.venv\Scripts\Activate.ps1
 ```
 
-3. Iniciar o backend
+3. Entrar na pasta do backend
 
 ```powershell
-.\.venv\Scripts\python.exe .\grimmorium-react-backend\main.py
+cd .\grimmorium-react-backend
 ```
 
-Pronto. O backend estara rodando.
+4. Instalar dependencias
+
+```powershell
+pip install -r requirements.txt
+```
+
+5. Iniciar backend
+
+```powershell
+python main.py
+```
 
 ## Como testar se esta funcionando
 
@@ -60,13 +68,12 @@ No terminal onde a API esta rodando, pressione `Ctrl + C`.
 
 - Reinstale o Python e marque a opcao Add Python to PATH.
 
-2. "arquivo nao encontrado .\\.venv\\Scripts\\python.exe"
+2. "execucao de scripts desabilitada"
 
-- Voce provavelmente ainda nao criou a venv.
-- Rode novamente:
+- Rode este comando e depois tente ativar de novo:
 
 ```powershell
-python -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
 ```
 
 3. Porta 5000 ocupada
