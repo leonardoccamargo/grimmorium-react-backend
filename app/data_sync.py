@@ -60,9 +60,13 @@ def _hit_die_for_class(class_name: str) -> int:
 
 
 def _frontend_public_dir() -> str:
+    configured_dir = os.getenv("FRONTEND_PUBLIC_DIR")
+    if configured_dir:
+        return configured_dir
+
     backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     project_root = os.path.dirname(backend_dir)
-    return os.path.join(project_root, "grimmorium-react-main", "public")
+    return os.path.join(project_root, "grimmorium-react", "public")
 
 
 def _safe_read_json(file_path: str):

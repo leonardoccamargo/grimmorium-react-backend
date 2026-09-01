@@ -6,61 +6,35 @@ Este repositório contém o **backend** responsável pela lógica de negócios, 
 
 ## 🛠️ Pré-requisitos
 
-1. **Sistema Operacional:** Windows com PowerShell.
-2. **Linguagem:** Python 3.10+ instalado ([Download aqui](https://www.python.org)).
+1. **Docker Desktop:** instalado e em execução ([instalação](https://docs.docker.com/desktop/install/windows-install/)).
 
 ---
 
-## 🚀 Passo a Passo para Execução
+## 🐳 Execução com Docker
 
-Siga a ordem dos comandos abaixo no seu PowerShell:
+Para executar apenas a API, na raiz deste repositório:
 
-### 1. Criar ambiente virtual
+```powershell
+docker build -t grimmorium-backend .
+docker run --rm -p 5000:5000 grimmorium-backend
+```
+
+Use [http://localhost:5000](http://localhost:5000) para a API e [http://localhost:5000/openapi/swagger](http://localhost:5000/openapi/swagger) para o Swagger. Para iniciar API e interface juntas, use `docker compose up --build` no repositório principal [grimmorium-react](https://github.com/leonardoccamargo/grimmorium-react). O SQLite é mantido em um volume Docker entre reinicializações.
+
+---
+
+## 💻 Execução local (alternativa para desenvolvimento)
+
+Para executar sem Docker, instale Python 3.10+ e execute:
 
 ```powershell
 python -m venv .venv
-
-```
-
-### 2. Ativar ambiente virtual
-
-```powershell
 .\.venv\Scripts\Activate.ps1
-
-```
-
-### 3. Entrar na pasta do backend
-
-```powershell
-cd .\grimmorium-react-backend
-
-```
-
-### 4. Instalar dependências
-
-```powershell
 pip install -r requirements.txt
-
-```
-
-### 5. Iniciar backend
-
-```powershell
 python main.py
-
 ```
 
-👋 **Como parar o backend:** No terminal onde a API está rodando, pressione `Ctrl + C`.
-
----
-
-## 🧪 Como testar se está funcionando
-
-Com o servidor ligado, você pode abrir os seguintes links no seu navegador para validação:
-
-* **API Raiz:** [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
-* **Health Check:** [http://127.0.0.1:5000/api/hello](http://127.0.0.1:5000/api/hello)
-* **Swagger (Interface de testes):** [http://127.0.0.1:5000/openapi/swagger](http://127.0.0.1:5000/openapi/swagger)
+Valide em [http://127.0.0.1:5000/](http://127.0.0.1:5000/) e no [Swagger](http://127.0.0.1:5000/openapi/swagger). Para interromper, pressione `Ctrl + C`.
 
 ---
 
