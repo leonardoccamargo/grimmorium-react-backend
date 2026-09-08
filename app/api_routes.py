@@ -25,6 +25,7 @@ from app.schemas import (
     QueryCharactersV2,
     CharacterWizardCreateSchema,
     CharacterPlayPatchSchema,
+    ShortRestSchema,
     SpellSlotPatchSchema,
     RewardSchema,
     ShopItemCreateSchema,
@@ -381,19 +382,20 @@ def init_api_routes(app):
             return jsonify({'status': 'error', 'message': str(exc)}), 500
 
     @app.post('/api/v2/characters/<int:id>/rest/short', summary='Apply short rest', tags=[tag_characters_v2])
-    def short_rest(path: PathCharacterId):
+    def short_rest(path: PathCharacterId, body: ShortRestSchema):
         try:
             character = Character.query.get(path.id)
             if not character:
                 return jsonify({'status': 'error', 'message': 'Character not found'}), 404
 
-            if character.hit_dice_current <= 0:
-                return jsonify({'status': 'error', 'message': 'No hit dice available for short rest'}), 400
+            if body.dice_count > character.hit_dice_current:
+                return jsonify({'status': 'error', 'message': 'Not enough hit dice for short rest'}), 400
 
             con_mod = ability_modifier(character.abilities.con_total) if character.abilities else 0
-            heal = max(0, randint(1, character.hit_die) + con_mod)
+            rolls = [randint(1, character.hit_die) + con_mod for _ in range(body.dice_count)]
+            heal = max(0, sum(rolls))
             character.hp_current = min(character.hp_current + heal, character.hp_max)
-            character.hit_dice_current -= 1
+            character.hit_dice_current -= body.dice_count
 
             recovered_slots = 0
             if normalize_name(character.character_class).lower() in {'bruxo', 'warlock'}:
@@ -408,7 +410,8 @@ def init_api_routes(app):
                 'status': 'success',
                 'message': 'Short rest applied',
                 'healed': heal,
-                'hit_dice_spent': 1,
+                'rolls': rolls,
+                'hit_dice_spent': body.dice_count,
                 'spell_slots_recovered': recovered_slots,
                 'character': character.to_dict(),
             }), 200

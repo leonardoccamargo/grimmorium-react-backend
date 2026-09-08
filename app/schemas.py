@@ -122,6 +122,10 @@ class CharacterPlayPatchSchema(BaseModel):
     speed: Optional[int] = Field(None, ge=0, le=120)
 
 
+class ShortRestSchema(BaseModel):
+    dice_count: int = Field(0, ge=0, le=20, description='Quantidade de Dados de Vida gastos')
+
+
 class SpellSlotPatchSchema(BaseModel):
     used_slots: int = Field(..., ge=0, le=9)
 
