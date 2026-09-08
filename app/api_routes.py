@@ -392,7 +392,8 @@ def init_api_routes(app):
                 return jsonify({'status': 'error', 'message': 'Not enough hit dice for short rest'}), 400
 
             con_mod = ability_modifier(character.abilities.con_total) if character.abilities else 0
-            rolls = [randint(1, character.hit_die) + con_mod for _ in range(body.dice_count)]
+            raw_rolls = [randint(1, character.hit_die) for _ in range(body.dice_count)]
+            rolls = [roll + con_mod for roll in raw_rolls]
             heal = max(0, sum(rolls))
             character.hp_current = min(character.hp_current + heal, character.hp_max)
             character.hit_dice_current -= body.dice_count
@@ -409,7 +410,10 @@ def init_api_routes(app):
             return jsonify({
                 'status': 'success',
                 'message': 'Short rest applied',
+                'hit_die': character.hit_die,
+                'constitution_modifier': con_mod,
                 'healed': heal,
+                'raw_rolls': raw_rolls,
                 'rolls': rolls,
                 'hit_dice_spent': body.dice_count,
                 'spell_slots_recovered': recovered_slots,
