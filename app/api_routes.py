@@ -395,6 +395,10 @@ def init_api_routes(app):
             raw_rolls = [randint(1, character.hit_die) for _ in range(body.dice_count)]
             rolls = [roll + con_mod for roll in raw_rolls]
             heal = max(0, sum(rolls))
+            roll_breakdown = [
+                {'die': raw_roll, 'constitution_modifier': con_mod, 'result': result}
+                for raw_roll, result in zip(raw_rolls, rolls)
+            ]
             character.hp_current = min(character.hp_current + heal, character.hp_max)
             character.hit_dice_current -= body.dice_count
 
@@ -415,6 +419,7 @@ def init_api_routes(app):
                 'healed': heal,
                 'raw_rolls': raw_rolls,
                 'rolls': rolls,
+                'roll_breakdown': roll_breakdown,
                 'hit_dice_spent': body.dice_count,
                 'spell_slots_recovered': recovered_slots,
                 'character': character.to_dict(),
