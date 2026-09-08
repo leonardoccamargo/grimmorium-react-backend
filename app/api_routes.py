@@ -351,6 +351,8 @@ def init_api_routes(app):
                 character.hp_temp = max(body.hp_temp, 0)
             if body.hit_dice_current is not None:
                 character.hit_dice_current = min(max(body.hit_dice_current, 0), character.hit_dice_max)
+            if body.hit_dice_current is not None:
+                character.hit_dice_current = min(max(body.hit_dice_current, 0), character.hit_dice_max)
             if body.ac_base is not None:
                 character.ac_base = body.ac_base
             if body.speed is not None:
