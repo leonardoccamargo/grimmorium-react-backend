@@ -232,6 +232,58 @@ def init_api_routes(app):
             db.session.rollback()
             return jsonify({'status': 'error', 'message': str(exc)}), 500
 
+    @app.post('/api/v2/characters/sheet', summary='Update character sheet', tags=[tag_characters_v2])
+    def update_character_sheet():
+        try:
+            data = request.get_json(force=True) or {}
+            edit_id = data.pop('id', None)
+            character = Character.query.get(edit_id)
+            if not character:
+                return jsonify({'status': 'error', 'message': 'Character not found'}), 404
+
+            required_fields = ('name', 'race', 'character_class', 'abilities')
+            if not all(data.get(field) for field in required_fields):
+                return jsonify({'status': 'error', 'message': 'name, race, character_class and abilities are required'}), 400
+
+            duplicate = Character.query.filter(Character.name == normalize_name(data['name']), Character.id != character.id).first()
+            if duplicate:
+                return jsonify({'status': 'error', 'message': 'Character name already exists'}), 409
+
+            character.name = normalize_name(data['name'])
+            character.campaign = normalize_name(data.get('campaign')) or None
+            character.level = int(data.get('level', 1))
+            character.race = normalize_name(data['race'])
+            character.subrace = normalize_name(data.get('subrace')) or None
+            character.character_class = normalize_name(data['character_class'])
+            character.hit_die = int(data.get('hit_die', 8))
+            character.alignment = normalize_name(data.get('alignment')) or None
+            character.background = normalize_name(data.get('background')) or None
+            character.personality_traits = data.get('personality_traits')
+            character.ideals = data.get('ideals')
+            character.bonds = data.get('bonds')
+            character.flaws = data.get('flaws')
+            character.hp_max = int(data.get('hp_max', 10))
+            character.hp_current = min(max(int(data.get('hp_current', character.hp_max)), 0), character.hp_max)
+            character.ac_base = int(data.get('ac_base', 10))
+            character.ac_current = character.ac_base
+            character.hit_dice_max = character.level
+            character.hit_dice_current = min(character.hit_dice_current, character.hit_dice_max)
+
+            abilities = data['abilities']
+            for key in ('str', 'dex', 'con', 'int', 'wis', 'cha'):
+                setattr(character.abilities, f'{key}_base', int(abilities.get(f'{key}_base', 10)))
+                setattr(character.abilities, f'{key}_racial', int(abilities.get(f'{key}_racial', 0)))
+            for slot in list(character.spell_slots):
+                db.session.delete(slot)
+            for slot in data.get('spell_slots', []):
+                db.session.add(CharacterSpellSlot(character_id=character.id, slot_level=int(slot['slot_level']), max_slots=int(slot['max_slots']), used_slots=int(slot.get('used_slots', 0))))
+
+            db.session.commit()
+            return jsonify({'status': 'success', 'message': 'Character sheet updated', 'character': character.to_dict()}), 200
+        except Exception as exc:
+            db.session.rollback()
+            return jsonify({'status': 'error', 'message': str(exc)}), 500
+
     @app.post('/api/v2/characters/wizard', summary='Create character by wizard', tags=[tag_characters_v2])
     def create_character_wizard(body: CharacterWizardCreateSchema):
         try:
@@ -247,7 +299,6 @@ def init_api_routes(app):
             hp_current = min(max(hp_current, 0), body.hp_max)
 
             character = Character(
-                name=name,
                 campaign=normalize_name(body.campaign) or None,
                 level=body.level,
                 race=normalize_name(body.race),
