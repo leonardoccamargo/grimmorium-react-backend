@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from math import ceil
+from random import randint
 from typing import Optional
 from flask import jsonify, request
 from flask_openapi3 import Tag
@@ -391,12 +391,27 @@ def init_api_routes(app):
                 return jsonify({'status': 'error', 'message': 'No hit dice available for short rest'}), 400
 
             con_mod = ability_modifier(character.abilities.con_total) if character.abilities else 0
-            heal = max(1, ceil(character.hit_die / 2) + con_mod)
+            heal = max(0, randint(1, character.hit_die) + con_mod)
             character.hp_current = min(character.hp_current + heal, character.hp_max)
             character.hit_dice_current -= 1
+
+            recovered_slots = 0
+            if normalize_name(character.character_class).lower() in {'bruxo', 'warlock'}:
+                for slot in character.spell_slots:
+                    if slot.max_slots > 0:
+                        recovered_slots += slot.used_slots
+                        slot.used_slots = 0
+
             db.session.commit()
 
-            return jsonify({'status': 'success', 'message': 'Short rest applied', 'healed': heal, 'character': character.to_dict()}), 200
+            return jsonify({
+                'status': 'success',
+                'message': 'Short rest applied',
+                'healed': heal,
+                'hit_dice_spent': 1,
+                'spell_slots_recovered': recovered_slots,
+                'character': character.to_dict(),
+            }), 200
         except Exception as exc:
             db.session.rollback()
             return jsonify({'status': 'error', 'message': str(exc)}), 500
