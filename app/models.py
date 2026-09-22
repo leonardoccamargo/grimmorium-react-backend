@@ -87,6 +87,7 @@ class Character(db.Model):
     spell_slots = db.relationship('CharacterSpellSlot', backref='character', cascade='all, delete-orphan')
     inventory_items = db.relationship('InventoryItem', backref='character', cascade='all, delete-orphan')
     ledger_entries = db.relationship('LedgerEntry', backref='character', cascade='all, delete-orphan')
+    history_entries = db.relationship('CharacterHistory', backref='character', cascade='all, delete-orphan')
 
     def proficiency_bonus(self):
         return proficiency_by_level(self.level)
@@ -152,6 +153,27 @@ class Character(db.Model):
             },
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
+        }
+
+
+class CharacterHistory(db.Model):
+    __tablename__ = 'character_history'
+
+    id = db.Column(db.Integer, primary_key=True)
+    character_id = db.Column(db.Integer, db.ForeignKey('characters.id'), nullable=False, index=True)
+    event_type = db.Column(db.String(40), nullable=False)
+    summary = db.Column(db.String(160), nullable=False)
+    details = db.Column(db.JSON, nullable=False, default=dict)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, index=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'character_id': self.character_id,
+            'event_type': self.event_type,
+            'summary': self.summary,
+            'details': self.details or {},
+            'created_at': self.created_at.isoformat(),
         }
 
 

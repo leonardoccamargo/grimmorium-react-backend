@@ -11,6 +11,7 @@ from app.models import (
     Character,
     CharacterAbility,
     CharacterSpellSlot,
+    CharacterHistory,
     InventoryItem,
     ShopItem,
     LedgerEntry,
@@ -79,6 +80,32 @@ def apply_coin_cp(character: Character, amount_cp: int):
 def current_ac(character: Character):
     equipped_bonus = sum(item.grants_ac for item in character.inventory_items if item.is_equipped)
     return character.ac_base + equipped_bonus
+
+
+def register_character_history(character_id: int, event_type: str, summary: str, details=None):
+    entry = CharacterHistory(
+        character_id=character_id,
+        event_type=event_type,
+        summary=summary,
+        details=details or {},
+    )
+    db.session.add(entry)
+    db.session.flush()
+
+    entries = CharacterHistory.query.filter_by(character_id=character_id).order_by(
+        CharacterHistory.created_at.desc(), CharacterHistory.id.desc(),
+    ).all()
+    for old_entry in entries[9:]:
+        db.session.delete(old_entry)
+
+
+def describe_delta(amount: int, recovered_label: str, lost_label: str, singular: str, plural: str):
+    if amount == 0:
+        return None
+    action = recovered_label if amount > 0 else lost_label
+    quantity = abs(amount)
+    unit = singular if quantity == 1 else plural
+    return f'{action} {quantity} {unit}.'
 
 
 def register_ledger(character_id: int, entry_type: str, amount_cp: int, description: str):
@@ -275,6 +302,7 @@ def init_api_routes(app):
                 setattr(character.abilities, f'{key}_racial', int(abilities.get(f'{key}_racial', 0)))
             for slot in list(character.spell_slots):
                 db.session.delete(slot)
+            db.session.flush()
             for slot in data.get('spell_slots', []):
                 db.session.add(CharacterSpellSlot(character_id=character.id, slot_level=int(slot['slot_level']), max_slots=int(slot['max_slots']), used_slots=int(slot.get('used_slots', 0))))
 
@@ -282,6 +310,20 @@ def init_api_routes(app):
             return jsonify({'status': 'success', 'message': 'Character sheet updated', 'character': character.to_dict()}), 200
         except Exception as exc:
             db.session.rollback()
+            return jsonify({'status': 'error', 'message': str(exc)}), 500
+
+    @app.get('/api/v2/characters/<int:id>/history', summary='List recent play history', tags=[tag_characters_v2])
+    def list_character_history(path: PathCharacterId):
+        try:
+            character = Character.query.get(path.id)
+            if not character:
+                return jsonify({'status': 'error', 'message': 'Character not found'}), 404
+
+            rows = CharacterHistory.query.filter_by(character_id=character.id).order_by(
+                CharacterHistory.created_at.desc(), CharacterHistory.id.desc(),
+            ).limit(9).all()
+            return jsonify({'status': 'success', 'total': len(rows), 'entries': [row.to_dict() for row in rows]}), 200
+        except Exception as exc:
             return jsonify({'status': 'error', 'message': str(exc)}), 500
 
     @app.post('/api/v2/characters/wizard', summary='Create character by wizard', tags=[tag_characters_v2])
@@ -396,6 +438,11 @@ def init_api_routes(app):
             if not character:
                 return jsonify({'status': 'error', 'message': 'Character not found'}), 404
 
+            previous_hp = character.hp_current
+            previous_hp_temp = character.hp_temp
+            previous_hit_dice = character.hit_dice_current
+            previous_ac = character.ac_base
+
             if body.hp_current is not None:
                 character.hp_current = min(max(body.hp_current, 0), character.hp_max)
             if body.hp_temp is not None:
@@ -410,6 +457,44 @@ def init_api_routes(app):
                 character.speed = body.speed
 
             character.ac_current = current_ac(character)
+            if body.hp_current is not None:
+                summary = describe_delta(
+                    character.hp_current - previous_hp,
+                    'Recuperou', 'Perdeu', 'ponto de vida', 'pontos de vida',
+                )
+                if summary:
+                    register_character_history(
+                        character.id, 'hp_update', summary,
+                        {'from': previous_hp, 'to': character.hp_current},
+                    )
+
+            if body.hp_temp is not None:
+                summary = describe_delta(
+                    character.hp_temp - previous_hp_temp,
+                    'Recuperou', 'Perdeu', 'ponto de vida temporário', 'pontos de vida temporários',
+                )
+                if summary:
+                    register_character_history(
+                        character.id, 'hp_temp_update', summary,
+                        {'from': previous_hp_temp, 'to': character.hp_temp},
+                    )
+
+            if body.hit_dice_current is not None:
+                summary = describe_delta(
+                    character.hit_dice_current - previous_hit_dice,
+                    'Recuperou', 'Perdeu', 'dado de vida', 'dados de vida',
+                )
+                if summary:
+                    register_character_history(
+                        character.id, 'hit_dice_update', summary,
+                        {'from': previous_hit_dice, 'to': character.hit_dice_current},
+                    )
+
+            if body.ac_base is not None and previous_ac != character.ac_base:
+                register_character_history(
+                    character.id, 'ac_update', 'Classe de armadura atualizada',
+                    {'from': previous_ac, 'to': character.ac_base},
+                )
             db.session.commit()
 
             return jsonify({'status': 'success', 'message': 'Play mode values updated', 'character': character.to_dict()}), 200
@@ -426,7 +511,17 @@ def init_api_routes(app):
             if body.used_slots > slot.max_slots:
                 return jsonify({'status': 'error', 'message': 'Used slots cannot exceed max slots'}), 400
 
+            previous_used_slots = slot.used_slots
             slot.used_slots = body.used_slots
+            summary = describe_delta(
+                previous_used_slots - slot.used_slots,
+                'Recuperou', 'Perdeu', 'slot de feitiço', 'slots de feitiço',
+            )
+            if summary:
+                register_character_history(
+                    path.id, 'spell_slot_update', summary,
+                    {'slot_level': path.slot_level, 'from': previous_used_slots, 'to': slot.used_slots},
+                )
             db.session.commit()
 
             return jsonify({'status': 'success', 'slot': slot.to_dict()}), 200
@@ -462,6 +557,12 @@ def init_api_routes(app):
                         recovered_slots += slot.used_slots
                         slot.used_slots = 0
 
+            register_character_history(
+                character.id,
+                'short_rest',
+                'Descanso curto aplicado',
+                {'healed': heal, 'hit_dice_spent': body.dice_count, 'spell_slots_recovered': recovered_slots},
+            )
             db.session.commit()
 
             return jsonify({
@@ -496,6 +597,12 @@ def init_api_routes(app):
             for slot in character.spell_slots:
                 slot.used_slots = 0
 
+            register_character_history(
+                character.id,
+                'long_rest',
+                'Descanso longo aplicado',
+                {'hp_current': character.hp_current, 'hit_dice_current': character.hit_dice_current},
+            )
             db.session.commit()
 
             return jsonify({'status': 'success', 'message': 'Long rest applied', 'character': character.to_dict()}), 200
