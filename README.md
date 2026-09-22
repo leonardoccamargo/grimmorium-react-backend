@@ -1,31 +1,51 @@
-# 🔮 Grimmorium Backend API
+# Grimmorium Backend
 
-Este repositório contém o **backend** responsável pela lógica de negócios, persistência e gerenciamento do sistema Grimmorium. Ele funciona de forma integrada ao [repositório frontend](https://github.com/leonardoccamargo/grimmorium-react), garantindo que os dados estejam sempre atualizados.
+API e banco de dados do Grimmorium. O backend guarda as fichas, atualiza os dados da sessao e fornece as informacoes usadas pelo frontend.
 
----
+## Recomendado: executar o site completo
 
-## 🛠️ Pré-requisitos
+Para rodar frontend e backend juntos, mantenha os dois repositorios na mesma pasta:
 
-1. **Docker Desktop:** instalado e em execução ([instalação](https://docs.docker.com/desktop/install/windows-install/)).
+```text
+Grimmorium/
+├── grimmorium-react/
+└── grimmorium-react-backend/
+```
 
----
+Abra o PowerShell na pasta `grimmorium-react` e execute:
 
-## 🐳 Execução com Docker
+```powershell
+docker compose up --build
+```
 
-Para executar apenas a API, na raiz deste repositório:
+Depois, abra:
+
+- Site: [http://localhost:8080](http://localhost:8080)
+- API: [http://localhost:5000](http://localhost:5000)
+- Documentacao da API: [http://localhost:5000/openapi/swagger](http://localhost:5000/openapi/swagger)
+
+Para encerrar os containers:
+
+```powershell
+docker compose down
+```
+
+## Executar apenas o backend
+
+Use esta opcao somente se o frontend ja estiver rodando separadamente.
+
+Na pasta deste repositorio:
 
 ```powershell
 docker build -t grimmorium-backend .
 docker run --rm -p 5000:5000 grimmorium-backend
 ```
 
-Use [http://localhost:5000](http://localhost:5000) para a API e [http://localhost:5000/openapi/swagger](http://localhost:5000/openapi/swagger) para o Swagger. Para iniciar API e interface juntas, use `docker compose up --build` no repositório principal [grimmorium-react](https://github.com/leonardoccamargo/grimmorium-react). O SQLite é mantido em um volume Docker entre reinicializações.
+## Executar sem Docker
 
----
+Pre-requisito: Python 3.10 ou superior.
 
-## 💻 Execução local (alternativa para desenvolvimento)
-
-Para executar sem Docker, instale Python 3.10+ e execute:
+No PowerShell, dentro da pasta do backend:
 
 ```powershell
 python -m venv .venv
@@ -34,55 +54,46 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Valide em [http://127.0.0.1:5000/](http://127.0.0.1:5000/) e no [Swagger](http://127.0.0.1:5000/openapi/swagger). Para interromper, pressione `Ctrl + C`.
+API local: [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
----
+## O que a API faz
 
-## 📋 Endpoints Principais
+### Personagens
 
-### 🩺 Health
+- `GET /api/v2/characters`: lista personagens.
+- `GET /api/v2/characters/<id>`: consulta uma ficha.
+- `POST /api/v2/characters/wizard`: cria uma ficha.
+- `POST /api/v2/characters/sheet`: edita uma ficha.
+- `DELETE /api/v2/characters/<id>`: remove uma ficha.
 
-* `GET /`
-* `GET /api/hello`
+### Sessao de jogo
 
-### 🪄 Magias e Sincronização
+- `PUT /api/v2/characters/<id>/play`: atualiza HP, CA, velocidade e dados de vida.
+- `PUT /api/v2/characters/<id>/spell-slots/<slot_level>`: atualiza slots usados.
+- `POST /api/v2/characters/<id>/rest/short`: aplica descanso curto.
+- `POST /api/v2/characters/<id>/rest/long`: aplica descanso longo.
+- `GET /api/v2/characters/<id>/history`: lista as ultimas 9 alteracoes da ficha.
 
-* `GET /api/magias`
-* `POST /api/sync/import-local-json`
-* `POST /api/sync/export-local-json`
+Alteracoes feitas no modo **Jogar** entram no historico. A edicao completa da ficha nao entra. Quando o limite e ultrapassado, o registro mais antigo e removido.
 
-### 🧙‍♂️ Personagens
+### Inventario e economia
 
-* `GET /api/v2/characters`
-* `GET /api/v2/characters/<id>`
-* `DELETE /api/v2/characters/<id>`
-* `POST /api/v2/characters/wizard`
-* `PUT /api/v2/characters/<id>/play`
-* `PUT /api/v2/characters/<id>/spell-slots/<slot_level>`
-* `POST /api/v2/characters/<id>/rest/short`
-* `POST /api/v2/characters/<id>/rest/long`
-* `PUT /api/v2/characters/<id>/inventory/<item_id>/equip`
-* `PUT /api/v2/characters/<id>/inventory/<item_id>/attune`
-* `POST /api/v2/characters/<id>/shop/purchase`
-* `POST /api/v2/characters/<id>/ledger/reward`
-* `GET /api/v2/characters/<id>/ledger`
+- Equipar e ajustar itens do inventario.
+- Comprar itens da loja.
+- Registrar recompensas e consultar o ledger.
 
----
+### Magias
 
-## 💾 Banco de Dados e Sincronização
+- `GET /api/magias`: disponibiliza as magias usadas pelo frontend.
+- `POST /api/sync/import-local-json`: importa dados locais.
+- `POST /api/sync/export-local-json`: exporta dados para o frontend.
 
-> ✨ **Regra de Ouro do Sistema:** O backend atua como a **fonte principal da verdade** (Single Source of Truth).
+## Banco de dados
 
-1. **Armazenamento Principal:** O backend utiliza o banco de dados **SQLite** local.
-2. **Inicialização:** Ao iniciar o servidor, se o banco SQLite estiver completamente vazio, o sistema automaticamente importa os dados iniciais dos arquivos `personagens.json` e `magias.json`.
-3. **Fluxo de Escrita:** Em qualquer operação de escrita bem-sucedida na API (`POST`, `PUT`, `PATCH`, `DELETE`), o backend realiza duas etapas ordenadas:
-* **Primeiro:** Atualiza as tabelas correspondentes no SQLite.
-* **Segundo:** Exporta e atualiza os JSONs do frontend, mantendo `personagens.json` e `magias.json` sempre sincronizados.
+Os dados sao salvos em SQLite. No Docker Compose, o banco fica em um volume persistente e continua disponivel apos reiniciar os containers.
 
+Quando o banco esta vazio, o sistema carrega os dados iniciais dos arquivos locais de personagens e magias.
 
+## API externa
 
----
-
-## 🎖️ Créditos
-
-* **Base de dados externa:** [D&D 5e API](https://dnd5eapi.co)
+O frontend tambem consulta a [D&D 5e API](https://www.dnd5eapi.co) para pesquisar magias. Ela e publica, gratuita e nao exige cadastro ou chave.
