@@ -341,6 +341,7 @@ def init_api_routes(app):
             hp_current = min(max(hp_current, 0), body.hp_max)
 
             character = Character(
+                name=name,
                 campaign=normalize_name(body.campaign) or None,
                 level=body.level,
                 race=normalize_name(body.race),
