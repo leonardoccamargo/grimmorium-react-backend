@@ -539,6 +539,8 @@ def init_api_routes(app):
             if body.dice_count > character.hit_dice_current:
                 return jsonify({'status': 'error', 'message': 'Not enough hit dice for short rest'}), 400
 
+            previous_hp = character.hp_current
+            previous_hit_dice = character.hit_dice_current
             con_mod = ability_modifier(character.abilities.con_total) if character.abilities else 0
             raw_rolls = [randint(1, character.hit_die) for _ in range(body.dice_count)]
             rolls = [roll + con_mod for roll in raw_rolls]
@@ -557,12 +559,11 @@ def init_api_routes(app):
                         recovered_slots += slot.used_slots
                         slot.used_slots = 0
 
-            register_character_history(
-                character.id,
-                'short_rest',
-                'Descanso curto aplicado',
-                {'healed': heal, 'hit_dice_spent': body.dice_count, 'spell_slots_recovered': recovered_slots},
-            )
+            register_character_history(character.id, 'short_rest', 'Realizou um descanso curto.', {
+                'healed': heal,
+                'hit_dice_spent': body.dice_count,
+                'spell_slots_recovered': recovered_slots,
+            })
             db.session.commit()
 
             return jsonify({
@@ -589,6 +590,9 @@ def init_api_routes(app):
             if not character:
                 return jsonify({'status': 'error', 'message': 'Character not found'}), 404
 
+            previous_hp = character.hp_current
+            previous_hit_dice = character.hit_dice_current
+            previous_used_slots = sum(slot.used_slots for slot in character.spell_slots)
             character.hp_current = character.hp_max
             character.hp_temp = 0
             recover_hit_dice = max(1, character.hit_dice_max // 2)
@@ -597,12 +601,12 @@ def init_api_routes(app):
             for slot in character.spell_slots:
                 slot.used_slots = 0
 
-            register_character_history(
-                character.id,
-                'long_rest',
-                'Descanso longo aplicado',
-                {'hp_current': character.hp_current, 'hit_dice_current': character.hit_dice_current},
-            )
+            recovered_slots = previous_used_slots - sum(slot.used_slots for slot in character.spell_slots)
+            register_character_history(character.id, 'long_rest', 'Realizou um descanso longo.', {
+                'hp_recovered': max(0, character.hp_current - previous_hp),
+                'hit_dice_recovered': max(0, character.hit_dice_current - previous_hit_dice),
+                'spell_slots_recovered': recovered_slots,
+            })
             db.session.commit()
 
             return jsonify({'status': 'success', 'message': 'Long rest applied', 'character': character.to_dict()}), 200
